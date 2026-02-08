@@ -12,6 +12,8 @@ TagManager:
   - GorilaBossZone
   - MonjeBossZone
   - CinemachineMainCam
+  - Player1
+  - Player2
   layers:
   - Default
   - TransparentFX
@@ -23,7 +25,7 @@ TagManager:
   - Vine
   - Player
   - Wall
-  - 
+  - Obstacle
   - 
   - 
   - 

@@ -1,9 +1,10 @@
 ﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Mirror;
 
 
-public class PlayerStateMachine : MonoBehaviour
+public class PlayerStateMachine : NetworkBehaviour
 {
     public enum PlayerState
     {
@@ -284,6 +285,11 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void Update()
     {
+        if (!isLocalPlayer)
+        {
+            return;
+        }
+
         if (isDead) { return; } //si estem morts, no fem res
 
         if (!dialogueLocked)
@@ -390,7 +396,12 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if(dialogueLocked) //si el diàleg està actiu, no processem moviments
+        if (!isLocalPlayer)
+        {
+            return;
+            
+        }
+        if (dialogueLocked) //si el diàleg està actiu, no processem moviments
         {
             return;
         }
@@ -616,7 +627,8 @@ public class PlayerStateMachine : MonoBehaviour
                 lastAttackTime = Time.time;
                 canFlip = false; //evitem que es giri durant l'animacio d'atac
                 ChangeState(PlayerState.AttackPunch);
-                animator.SetTrigger("AttackPunch");
+                PlayAnimation("PunchAttack");
+                //animator.SetTrigger("AttackPunch");
                 if (punchAttackSound != null)
                 {
                     audioSource.PlayOneShot(punchAttackSound);
@@ -633,7 +645,8 @@ public class PlayerStateMachine : MonoBehaviour
                 lastAttackTime = Time.time;
                 canFlip = false; //evitem que es giri durant l'animacio d'atac
                 ChangeState(PlayerState.AttackTail);
-                animator.SetTrigger("AttackTail");
+                PlayAnimation("AttackTail");
+                //animator.SetTrigger("AttackTail");
                 if (tailAttackSound != null)
                 {
                     audioSource.PlayOneShot(tailAttackSound);
@@ -650,7 +663,8 @@ public class PlayerStateMachine : MonoBehaviour
                     lastAttackTime = Time.time;
                     canFlip = false; //evitem que es giri durant l'animacio d'atac
                     ChangeState(PlayerState.SpecialAttackPunch);
-                    animator.SetTrigger("SpecialAttackPunch");
+                    PlayAnimation("SpecialAttackPunch");
+                    //animator.SetTrigger("SpecialAttackPunch");
                 }
             }
         }
@@ -1478,6 +1492,42 @@ public class PlayerStateMachine : MonoBehaviour
     {
         canFlip = true;
         Debug.Log("Player can flip again.");
+    }
+
+    void PlayAnimation(string animationName)
+    {
+        if (animator != null)
+        {
+            // Forzar reproducción desde el inicio, capa 0
+            animator.Play(animationName, 0, 0f);
+        }
+
+        if (isLocalPlayer)
+        {
+            CmdPlayAnimation(animationName);
+        }
+    }
+
+    [Command]
+    void CmdPlayAnimation(string animationName)
+    {
+        if (!isLocalPlayer && animator != null)
+        {
+            animator.Play(animationName, 0, 0f);
+        }
+
+        RpcPlayAnimation(animationName);
+    }
+
+    [ClientRpc]
+    void RpcPlayAnimation(string animationName)
+    {
+        if (isLocalPlayer) return;
+
+        if (animator != null)
+        {
+            animator.Play(animationName, 0, 0f);
+        }
     }
 
 
